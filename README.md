@@ -1,410 +1,275 @@
-# BeyondChats Article Scraper & Enhancer
+# BeyondChats Article Viewer
 
-A full-stack application that scrapes articles from BeyondChats blog, enhances them using AI, and displays them in a modern React frontend.
+A full-stack application that scrapes articles from BeyondChats, enhances them using AI, and displays both original and enhanced versions in a beautiful React frontend.
 
-![Project Architecture](https://img.shields.io/badge/Laravel-10.x-red?style=flat&logo=laravel)
-![Node.js](https://img.shields.io/badge/Node.js-20.x-green?style=flat&logo=node.js)
-![React](https://img.shields.io/badge/React-18.x-blue?style=flat&logo=react)
-![Docker](https://img.shields.io/badge/Docker-Compose-blue?style=flat&logo=docker)
-
-## 📋 Table of Contents
-
-- [Project Overview](#-project-overview)
-- [Architecture Diagram](#-architecture-diagram)
-- [Tech Stack](#-tech-stack)
-- [Project Structure](#-project-structure)
-- [Local Setup Instructions](#-local-setup-instructions)
-- [API Documentation](#-api-documentation)
-- [Features](#-features)
-- [Live Demo](#-live-demo)
-
-## 🎯 Project Overview
-
-This project is divided into three phases:
-
-### Phase 1: Laravel Backend (Article Scraper & CRUD API)
-- Scrapes the 5 oldest articles from [BeyondChats Blog](https://beyondchats.com/blogs/)
-- Stores articles in a MySQL database
-- Provides RESTful CRUD APIs for article management
-
-### Phase 2: Node.js Article Enhancer
-- Fetches the latest article from Laravel API
-- Searches Google for related articles
-- Scrapes content from top-ranking articles
-- Uses OpenAI GPT-4 to enhance the original article
-- Publishes enhanced article with cited references
-
-### Phase 3: React Frontend
-- Modern, responsive UI built with React 18 + Tailwind CSS
-- Displays both original and AI-enhanced articles
-- Beautiful article reader with reference citations
-
-## 🏗 Architecture Diagram
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           BeyondChats Article System                         │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   BeyondChats   │     │  Google Search  │     │   OpenAI API    │
-│     Blog        │     │   (Serper.dev)  │     │    (GPT-4)      │
-│ (Data Source)   │     │                 │     │                 │
-└────────┬────────┘     └────────┬────────┘     └────────┬────────┘
-         │                       │                       │
-         │ Scrape Articles       │ Search & Scrape       │ Enhance Content
-         ▼                       ▼                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                                                                             │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │                        LARAVEL BACKEND                               │   │
-│  │                        (Port 8000)                                   │   │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐   │   │
-│  │  │   Article    │  │   Scraper    │  │     API Endpoints        │   │   │
-│  │  │   Model      │  │   Service    │  │  GET  /api/articles      │   │   │
-│  │  │              │  │              │  │  GET  /api/articles/:slug│   │   │
-│  │  │  - title     │  │  - Guzzle    │  │  POST /api/articles      │   │   │
-│  │  │  - content   │  │  - DomCrawler│  │  PUT  /api/articles/:slug│   │   │
-│  │  │  - slug      │  │              │  │  DELETE /api/articles/...|   │   │
-│  │  │  - is_enhanced│ │              │  │  GET  /api/articles/latest│  │   │
-│  │  │  - references│  │              │  │                          │   │   │
-│  │  └──────────────┘  └──────────────┘  └──────────────────────────┘   │   │
-│  └──────────────────────────────────┬──────────────────────────────────┘   │
-│                                     │                                       │
-│                                     │ MySQL Connection                      │
-│                                     ▼                                       │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │                         MYSQL DATABASE                               │   │
-│  │                                                                      │   │
-│  │   ┌─────────────────────────────────────────────────────────────┐   │   │
-│  │   │                    articles table                            │   │   │
-│  │   │  id | title | slug | content | is_enhanced | references | ..│   │   │
-│  │   └─────────────────────────────────────────────────────────────┘   │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-         ▲                                                    │
-         │                                                    │
-         │ Fetch Article                                      │ API Requests
-         │ Publish Enhanced                                   │
-         │                                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                          NODE.JS ENHANCER                                    │
-│                                                                             │
-│  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌────────────────────┐    │
-│  │  Laravel   │  │  Google    │  │  Article   │  │      LLM           │    │
-│  │  API       │  │  Search    │  │  Scraper   │  │    Service         │    │
-│  │  Client    │  │  Service   │  │  (Cheerio) │  │   (OpenAI)         │    │
-│  └─────┬──────┘  └─────┬──────┘  └─────┬──────┘  └─────────┬──────────┘    │
-│        │               │               │                   │               │
-│        └───────────────┴───────────────┴───────────────────┘               │
-│                                │                                            │
-│                    ┌───────────┴───────────┐                               │
-│                    │   Article Enhancer    │                               │
-│                    │   (Orchestrator)      │                               │
-│                    └───────────────────────┘                               │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           REACT FRONTEND                                     │
-│                            (Port 3000)                                       │
-│                                                                             │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │                         Components                                   │   │
-│  │  ┌──────────┐  ┌──────────────┐  ┌─────────────┐  ┌─────────────┐   │   │
-│  │  │  Header  │  │ ArticleCard  │  │  HomePage   │  │ ArticlePage │   │   │
-│  │  └──────────┘  └──────────────┘  └─────────────┘  └─────────────┘   │   │
-│  │                                                                      │   │
-│  │  ┌────────────────────────────────────────────────────────────────┐ │   │
-│  │  │                    ArticleContext (State Management)           │ │   │
-│  │  └────────────────────────────────────────────────────────────────┘ │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-│                                                                             │
-│  Features:                                                                  │
-│  ✓ View original articles                                                   │
-│  ✓ View AI-enhanced articles with references                               │
-│  ✓ Filter by article type (original/enhanced)                              │
-│  ✓ Responsive design with Tailwind CSS                                     │
-│  ✓ Smooth animations with Framer Motion                                    │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### Data Flow
-
-```
-1. SCRAPING FLOW:
-   BeyondChats Blog → Laravel Scraper → MySQL Database
-
-2. ENHANCEMENT FLOW:
-   Laravel API → Node.js Enhancer → Google Search → Scrape Top Articles
-                                  → OpenAI GPT-4 → Enhanced Content
-                                  → Laravel API (Create Enhanced Article)
-
-3. DISPLAY FLOW:
-   MySQL Database → Laravel API → React Frontend → User
-```
-
-## 🛠 Tech Stack
-
-| Component | Technology |
-|-----------|------------|
-| **Backend** | Laravel 10, PHP 8.2, MySQL 8 |
-| **Enhancer** | Node.js 20, Axios, Cheerio, OpenAI SDK |
-| **Frontend** | React 18, Vite, Tailwind CSS, Framer Motion |
-| **DevOps** | Docker, Docker Compose |
-| **APIs** | Serper.dev (Google Search), OpenAI GPT-4 |
-
-## 📁 Project Structure
-
-```
-beyondchats-article-project/
-├── backend/                    # Laravel Backend
-│   ├── app/
-│   │   ├── Console/Commands/   # Artisan commands
-│   │   ├── Http/Controllers/   # API controllers
-│   │   ├── Models/             # Eloquent models
-│   │   └── Services/           # Business logic
-│   ├── database/migrations/    # Database migrations
-│   ├── routes/api.php          # API routes
-│   ├── Dockerfile
-│   └── composer.json
-│
-├── node-enhancer/              # Node.js Article Enhancer
-│   ├── src/
-│   │   ├── services/
-│   │   │   ├── ArticleEnhancer.js
-│   │   │   ├── ArticleScraper.js
-│   │   │   ├── GoogleSearchService.js
-│   │   │   ├── LaravelApiClient.js
-│   │   │   └── LLMService.js
-│   │   └── index.js
-│   ├── Dockerfile
-│   └── package.json
-│
-├── frontend/                   # React Frontend
-│   ├── src/
-│   │   ├── components/         # Reusable components
-│   │   ├── context/            # React context
-│   │   ├── pages/              # Page components
-│   │   ├── App.jsx
-│   │   └── main.jsx
-│   ├── Dockerfile
-│   └── package.json
-│
-├── docker-compose.yml          # Docker orchestration
-└── README.md                   # This file
-```
-
-## 🚀 Local Setup Instructions
-
-### Prerequisites
-
-- Docker & Docker Compose (recommended)
-- OR manually install: PHP 8.2+, Composer, Node.js 20+, MySQL 8
-
-### Option 1: Using Docker (Recommended)
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd beyondchats-article-project
-   ```
-
-2. **Create environment file**
-   ```bash
-   cp backend/.env.example backend/.env
-   ```
-
-3. **Set up API keys** (optional but recommended)
-   
-   Create a `.env` file in the root directory:
-   ```env
-   OPENAI_API_KEY=your_openai_api_key
-   SERPER_API_KEY=your_serper_api_key
-   ```
-
-4. **Start all services**
-   ```bash
-   docker-compose up -d --build
-   ```
-
-5. **Run database migrations**
-   ```bash
-   docker-compose exec backend php artisan migrate
-   ```
-
-6. **Scrape articles**
-   ```bash
-   docker-compose exec backend php artisan articles:scrape
-   ```
-
-7. **Run the article enhancer**
-   ```bash
-   docker-compose run node-enhancer npm start
-   ```
-
-8. **Access the application**
-   - Frontend: http://localhost:3000
-   - API: http://localhost:8000/api
-
-### Option 2: Manual Setup
-
-#### Backend (Laravel)
-
-```bash
-cd backend
-
-# Install dependencies
-composer install
-
-# Set up environment
-cp .env.example .env
-php artisan key:generate
-
-# Configure database in .env
-# DB_CONNECTION=mysql
-# DB_HOST=127.0.0.1
-# DB_DATABASE=beyondchats
-# DB_USERNAME=root
-# DB_PASSWORD=
-
-# Run migrations
-php artisan migrate
-
-# Scrape articles
-php artisan articles:scrape
-
-# Start server
-php artisan serve
-```
-
-#### Node.js Enhancer
-
-```bash
-cd node-enhancer
-
-# Install dependencies
-npm install
-
-# Create .env file
-echo "LARAVEL_API_URL=http://localhost:8000/api" > .env
-echo "OPENAI_API_KEY=your_key" >> .env
-echo "SERPER_API_KEY=your_key" >> .env
-
-# Run enhancer
-npm start
-```
-
-#### Frontend (React)
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Create .env file
-echo "VITE_API_URL=http://localhost:8000/api" > .env
-
-# Start development server
-npm run dev
-```
-
-## 📚 API Documentation
-
-### Base URL
-```
-http://localhost:8000/api
-```
-
-### Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/articles` | List all articles (paginated) |
-| GET | `/articles/latest` | Get the latest original article |
-| GET | `/articles/originals` | Get all original articles |
-| GET | `/articles/enhanced` | Get all enhanced articles |
-| GET | `/articles/{slug}` | Get a specific article |
-| POST | `/articles` | Create a new article |
-| PUT | `/articles/{slug}` | Update an article |
-| DELETE | `/articles/{slug}` | Delete an article |
-| GET | `/health` | API health check |
-
-### Example Request
-
-```bash
-# Get all articles
-curl http://localhost:8000/api/articles
-
-# Get latest article
-curl http://localhost:8000/api/articles/latest
-
-# Create article
-curl -X POST http://localhost:8000/api/articles \
-  -H "Content-Type: application/json" \
-  -d '{"title": "My Article", "content": "<p>Content here</p>"}'
-```
-
-## ✨ Features
-
-### Backend
-- ✅ Web scraping with Guzzle & DomCrawler
-- ✅ RESTful API with Laravel
-- ✅ MySQL database with proper migrations
-- ✅ Article CRUD operations
-- ✅ Filtering by enhanced/original status
-- ✅ CORS enabled for frontend
-
-### Node.js Enhancer
-- ✅ Fetches articles from Laravel API
-- ✅ Google search integration (via Serper.dev)
-- ✅ Web scraping with Cheerio
-- ✅ OpenAI GPT-4 integration
-- ✅ Automatic reference citation
-- ✅ Fallback enhancement without API keys
-
-### Frontend
-- ✅ Modern React 18 with hooks
-- ✅ Beautiful UI with Tailwind CSS
-- ✅ Smooth animations with Framer Motion
-- ✅ Responsive design
-- ✅ Article filtering (all/original/enhanced)
-- ✅ Reference display for enhanced articles
-- ✅ Demo data for preview without backend
+![BeyondChats Article Viewer](https://img.shields.io/badge/Status-Live-brightgreen) ![Laravel](https://img.shields.io/badge/Backend-Laravel-red) ![Node.js](https://img.shields.io/badge/Enhancer-Node.js-green) ![React](https://img.shields.io/badge/Frontend-React-blue)
 
 ## 🌐 Live Demo
 
-**Frontend URL:** [Coming Soon]
-
-The live demo showcases:
-- Original scraped articles from BeyondChats
-- AI-enhanced versions with cited references
-- Side-by-side comparison capability
-
-## 📝 Notes
-
-- **API Keys**: The enhancer works without API keys using fallback methods, but for best results:
-  - Get an OpenAI API key from https://platform.openai.com
-  - Get a Serper API key from https://serper.dev (free tier available)
-
-- **Scraping**: The scraper is configured for BeyondChats blog structure. For other sites, selectors may need adjustment.
-
-- **Rate Limiting**: The enhancer includes delays to avoid hitting rate limits on external APIs.
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License.
+- **Frontend:** [https://byond-chats-article-viewer.vercel.app](https://byond-chats-article-viewer.vercel.app)
+- **Backend API:** [https://beyondchats-api-7v31.onrender.com/api](https://beyondchats-api-7v31.onrender.com/api)
+- **Enhancer Service:** [https://beyondchats-enhancer.onrender.com](https://beyondchats-enhancer.onrender.com)
 
 ---
 
-**Built with ❤️ for BeyondChats**
+## 📋 Project Overview
 
+This project is divided into **3 phases** as per the task requirements:
+
+### Phase 1: Laravel Backend (Moderate Difficulty) ✅
+
+- Scrapes articles from the [BeyondChats Blog](https://beyondchats.com/blogs/)
+- Stores articles in a SQLite database
+- Provides full CRUD REST APIs for article management
+
+### Phase 2: Node.js Article Enhancer (Very Difficult) ✅
+
+- Fetches the latest article from the Laravel API
+- Searches Google for the article title
+- Scrapes content from top 2 competing articles
+- Uses OpenAI GPT to enhance the original article
+- Publishes the enhanced version with citations
+- Exposed as a web service with API endpoints
+
+### Phase 3: React Frontend (Very Easy) ✅
+
+- Beautiful, responsive UI built with React + Tailwind CSS
+- Displays both original and AI-enhanced articles
+- Filter tabs: All Articles, Original, Enhanced
+- **"✨ Enhance" button** to enhance articles directly from the UI
+- Smooth animations with Framer Motion
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         FRONTEND                                 │
+│                    React + Tailwind CSS                          │
+│                    (Vercel Deployment)                           │
+└─────────────────────┬───────────────────────┬───────────────────┘
+                      │                       │
+                      │ Fetch Articles        │ Enhance Request
+                      ▼                       ▼
+┌─────────────────────────────┐   ┌───────────────────────────────┐
+│      LARAVEL BACKEND        │   │    NODE.JS ENHANCER           │
+│                             │   │                               │
+│  • Article CRUD APIs        │◄──│  • Google Search              │
+│  • Web Scraper              │   │  • Article Scraper            │
+│  • SQLite Database          │   │  • OpenAI Integration         │
+│                             │   │  • Content Enhancement        │
+│     (Render Deployment)     │   │     (Render Deployment)       │
+└─────────────────────────────┘   └───────────────────────────────┘
+```
+
+---
+
+## 🚀 Features
+
+| Feature | Description |
+|---------|-------------|
+| 📰 Article Scraping | Automatically scrapes articles from BeyondChats blog |
+| 🤖 AI Enhancement | Uses GPT-4 to rewrite articles with improved structure |
+| 📚 Citation System | References competing articles in enhanced versions |
+| ✨ One-Click Enhance | Enhance any article directly from the UI |
+| 🎨 Beautiful UI | Modern design with dark gradients and smooth animations |
+| 📱 Responsive | Works perfectly on desktop, tablet, and mobile |
+| 🔍 Filter System | Toggle between All, Original, and Enhanced articles |
+
+---
+
+## 🛠️ Tech Stack
+
+### Backend (Laravel)
+- PHP 8.x
+- Laravel 10
+- SQLite Database
+- Guzzle HTTP Client
+
+### Enhancer (Node.js)
+- Node.js 18+
+- Express.js
+- OpenAI API (GPT-4)
+- Puppeteer (Web Scraping)
+- Cheerio (HTML Parsing)
+
+### Frontend (React)
+- React 18
+- Vite
+- Tailwind CSS
+- Framer Motion
+- React Router
+- Axios
+
+---
+
+## 📦 Local Development Setup
+
+### Prerequisites
+- PHP 8.x with Composer
+- Node.js 18+
+- npm or yarn
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/young-pluto/ByondChats-ArticleViewer.git
+cd ByondChats-ArticleViewer
+```
+
+### 2. Backend Setup (Laravel)
+
+```bash
+cd backend
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+php artisan db:seed
+php artisan serve
+```
+
+Backend runs at: `http://localhost:8000`
+
+### 3. Enhancer Setup (Node.js)
+
+```bash
+cd node-enhancer
+npm install
+cp .env.example .env
+# Add your OPENAI_API_KEY to .env
+npm start
+```
+
+Enhancer runs at: `http://localhost:3001`
+
+### 4. Frontend Setup (React)
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend runs at: `http://localhost:5173`
+
+---
+
+## 🔑 Environment Variables
+
+### Backend (.env)
+```env
+APP_KEY=base64:your-app-key
+APP_ENV=production
+DB_CONNECTION=sqlite
+```
+
+### Enhancer (.env)
+```env
+LARAVEL_API_URL=http://localhost:8000/api
+OPENAI_API_KEY=sk-your-openai-key
+SERPER_API_KEY=optional-for-google-search
+```
+
+### Frontend (.env)
+```env
+VITE_API_URL=http://localhost:8000/api
+VITE_ENHANCER_URL=http://localhost:3001
+```
+
+---
+
+## 📡 API Endpoints
+
+### Laravel Backend
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/articles` | List all articles |
+| GET | `/api/articles/{slug}` | Get single article |
+| POST | `/api/articles` | Create article |
+| PUT | `/api/articles/{slug}` | Update article |
+| DELETE | `/api/articles/{slug}` | Delete article |
+| GET | `/api/articles/latest` | Get latest article |
+| POST | `/api/scrape` | Trigger article scraping |
+
+### Node.js Enhancer
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/` | Health check |
+| GET | `/health` | Health status |
+| POST | `/enhance/:id` | Enhance specific article |
+| POST | `/enhance-latest` | Enhance latest non-enhanced article |
+
+---
+
+## 🎯 How the Enhancement Works
+
+1. **Fetch** - Gets the original article from Laravel API
+2. **Search** - Searches Google for the article title
+3. **Scrape** - Extracts content from top 2 competing articles
+4. **Analyze** - Sends all content to GPT-4 for analysis
+5. **Enhance** - GPT-4 rewrites the article with:
+   - Better structure and formatting
+   - Additional insights from competitors
+   - Improved readability
+6. **Publish** - Saves enhanced version with reference citations
+7. **Display** - Shows both versions in the frontend
+
+---
+
+## 📸 Screenshots
+
+### Homepage with Article Cards
+- Filter between All, Original, and Enhanced articles
+- Each card shows title, excerpt, date, and author
+- Enhanced articles have a special badge
+
+### Article Detail Page
+- Full article content with rich formatting
+- Reference citations for enhanced articles
+- Share and copy link functionality
+
+### Enhance Button
+- Click "✨ Enhance" on any original article
+- Real-time loading state
+- Automatic refresh after enhancement
+
+---
+
+## 🚀 Deployment
+
+### Backend → Render.com
+1. Create new Web Service
+2. Connect GitHub repository
+3. Set root directory to `backend`
+4. Set build command: `composer install --no-dev`
+5. Set start command: `php artisan serve --host=0.0.0.0 --port=$PORT`
+
+### Enhancer → Render.com
+1. Create new Web Service
+2. Connect GitHub repository
+3. Set root directory to `node-enhancer`
+4. Set build command: `npm install`
+5. Set start command: `npm start`
+6. Add environment variables (OPENAI_API_KEY, LARAVEL_API_URL)
+
+### Frontend → Vercel
+1. Import GitHub repository
+2. Set root directory to `frontend`
+3. Add environment variables (VITE_API_URL, VITE_ENHANCER_URL)
+4. Deploy
+
+---
+
+## 👨‍💻 Author
+
+Built for the BeyondChats Full-Stack Assessment
+
+---
+
+## 📄 License
+
+MIT License - feel free to use this code for learning purposes.
