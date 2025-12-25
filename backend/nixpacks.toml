@@ -1,15 +1,20 @@
 [phases.setup]
-nixPkgs = ["php83", "php83Packages.composer"]
+nixPkgs = ["php83", "php83Packages.composer", "php83Extensions.pdo_sqlite", "php83Extensions.sqlite3"]
 
 [phases.install]
 cmds = ["composer install --no-dev --optimize-autoloader"]
 
 [phases.build]
 cmds = [
-    "php artisan config:cache",
-    "php artisan route:cache",
+    "mkdir -p storage/framework/cache/data",
+    "mkdir -p storage/framework/sessions",
+    "mkdir -p storage/framework/views",
+    "mkdir -p storage/logs",
+    "mkdir -p bootstrap/cache",
+    "chmod -R 775 storage bootstrap/cache",
     "touch database/database.sqlite",
-    "php artisan migrate --force"
+    "php artisan migrate --force",
+    "php artisan db:seed --force || true"
 ]
 
 [start]

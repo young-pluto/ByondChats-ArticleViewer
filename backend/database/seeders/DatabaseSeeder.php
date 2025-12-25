@@ -11,7 +11,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // You can add seeders here if needed
+        $this->call([
+            ArticleSeeder::class,
+        ]);
     }
 }
 
