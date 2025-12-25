@@ -10,12 +10,21 @@ import { LLMService } from './services/LLMService.js';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
-app.use(cors());
+// Middleware - CORS with explicit configuration
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    credentials: false
+}));
+
+// Handle preflight requests
+app.options('*', cors());
+
 app.use(express.json());
 
 // Initialize services
-const apiClient = new LaravelApiClient(process.env.LARAVEL_API_URL || 'http://localhost:8000/api');
+const apiClient = new LaravelApiClient(process.env.LARAVEL_API_URL || 'https://beyondchats-api-7v31.onrender.com/api');
 const googleSearch = new GoogleSearchService(process.env.SERPER_API_KEY);
 const scraper = new ArticleScraper();
 const llmService = new LLMService(process.env.OPENAI_API_KEY);
