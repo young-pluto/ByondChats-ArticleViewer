@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply font-body text-midnight-800 bg-midnight-50;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-semibold;
+  }
+}
+
+@layer components {
+  .article-content {
+    @apply prose prose-lg max-w-none;
+  }
+
+  .article-content h2 {
+    @apply text-2xl font-display font-semibold text-midnight-900 mt-8 mb-4 pb-2 border-b border-midnight-200;
+  }
+
+  .article-content h3 {
+    @apply text-xl font-display font-medium text-midnight-800 mt-6 mb-3;
+  }
+
+  .article-content p {
+    @apply text-midnight-700 leading-relaxed mb-4;
+  }
+
+  .article-content ul, .article-content ol {
+    @apply my-4 pl-6 space-y-2;
+  }
+
+  .article-content li {
+    @apply text-midnight-700;
+  }
+
+  .article-content a {
+    @apply text-brand-600 hover:text-brand-700 underline decoration-brand-300 hover:decoration-brand-500 transition-colors;
+  }
+
+  .article-content blockquote {
+    @apply border-l-4 border-brand-400 pl-4 italic text-midnight-600 my-4;
+  }
+
+  .article-content code {
+    @apply font-mono bg-midnight-100 px-1.5 py-0.5 rounded text-sm text-midnight-800;
+  }
+
+  .article-content pre {
+    @apply bg-midnight-900 text-midnight-100 p-4 rounded-lg overflow-x-auto my-4;
+  }
+
+  .article-content pre code {
+    @apply bg-transparent p-0;
+  }
+
+  .gradient-bg {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  .glass-card {
+    @apply bg-white/80 backdrop-blur-lg border border-white/20 shadow-xl;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-midnight-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-midnight-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-midnight-400;
+}
+
+/* Selection */
+::selection {
+  @apply bg-brand-200 text-brand-900;
+}
+
