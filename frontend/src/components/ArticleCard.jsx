@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Calendar, User, Sparkles, ExternalLink, ArrowRight, Wand2, Loader2 } from 'lucide-react';
 import axios from 'axios';
 
-const ENHANCER_URL = import.meta.env.VITE_ENHANCER_URL || 'http://localhost:3001';
+const ENHANCER_URL = import.meta.env.VITE_ENHANCER_URL || 'https://beyondchats-enhancer.onrender.com';
 
 export default function ArticleCard({ article, index = 0, onEnhanced }) {
   const [enhancing, setEnhancing] = useState(false);

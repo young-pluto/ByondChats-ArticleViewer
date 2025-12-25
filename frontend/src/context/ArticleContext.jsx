@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const ArticleContext = createContext();
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://beyondchats-api-7v31.onrender.com/api';
 
 export function ArticleProvider({ children }) {
   const [articles, setArticles] = useState([]);
