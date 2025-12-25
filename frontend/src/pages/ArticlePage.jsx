@@ -19,22 +19,30 @@ export default function ArticlePage() {
 
   useEffect(() => {
     const fetchArticle = async () => {
+      // Wait for articles to be loaded first
+      if (articles.length === 0) {
+        return;
+      }
+      
       setLoading(true);
       setError(null);
       
       try {
+        // First try to find in cached articles (faster, no API call)
+        const cached = articles.find(a => a.slug === slug);
+        if (cached) {
+          setArticle(cached);
+          setLoading(false);
+          return;
+        }
+        
+        // If not found in cache, try API
         const data = await getArticleBySlug(slug);
         
         if (data) {
           setArticle(data);
         } else {
-          // Try to find in cached articles
-          const cached = articles.find(a => a.slug === slug);
-          if (cached) {
-            setArticle(cached);
-          } else {
-            setError('Article not found');
-          }
+          setError('Article not found');
         }
       } catch (err) {
         setError('Failed to load article');
@@ -44,7 +52,7 @@ export default function ArticlePage() {
     };
 
     fetchArticle();
-  }, [slug, getArticleBySlug, articles]);
+  }, [slug, articles]);
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);

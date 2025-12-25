@@ -40,6 +40,13 @@ export function ArticleProvider({ children }) {
   };
 
   const getArticleBySlug = async (slug) => {
+    // First check if we already have the article in state
+    const cachedArticle = articles.find(a => a.slug === slug);
+    if (cachedArticle) {
+      return cachedArticle;
+    }
+    
+    // If not in state, try to fetch from API
     try {
       const response = await axios.get(`${API_URL}/articles/${slug}`);
       
@@ -50,7 +57,7 @@ export function ArticleProvider({ children }) {
       return null;
     } catch (err) {
       console.error('Failed to fetch article:', err);
-      // Return demo article for development
+      // Return from articles list as fallback
       return articles.find(a => a.slug === slug) || null;
     }
   };
