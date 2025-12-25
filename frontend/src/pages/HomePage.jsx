@@ -153,7 +153,12 @@ export default function HomePage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredArticles.map((article, index) => (
-                <ArticleCard key={article.id} article={article} index={index} />
+                <ArticleCard 
+                  key={article.id} 
+                  article={article} 
+                  index={index}
+                  onEnhanced={() => fetchArticles()} 
+                />
               ))}
             </div>
           )}

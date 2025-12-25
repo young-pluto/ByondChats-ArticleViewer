@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: beyondchats-enhancer
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 18
+      - key: LARAVEL_API_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SERPER_API_KEY
+        sync: false
+

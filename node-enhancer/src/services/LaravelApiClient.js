@@ -51,6 +51,25 @@ export class LaravelApiClient {
     }
 
     /**
+     * Alias for getAllArticles
+     */
+    async getArticles() {
+        return this.getAllArticles();
+    }
+
+    /**
+     * Get article by ID
+     */
+    async getArticleById(id) {
+        try {
+            const articles = await this.getAllArticles();
+            return articles.find(a => a.id === parseInt(id)) || null;
+        } catch (error) {
+            throw new Error(`Failed to fetch article by ID: ${error.message}`);
+        }
+    }
+
+    /**
      * Get a specific article by slug
      */
     async getArticle(slug) {

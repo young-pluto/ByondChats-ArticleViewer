@@ -1,8 +1,39 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Calendar, User, Sparkles, ExternalLink, ArrowRight } from 'lucide-react';
+import { Calendar, User, Sparkles, ExternalLink, ArrowRight, Wand2, Loader2 } from 'lucide-react';
+import axios from 'axios';
 
-export default function ArticleCard({ article, index = 0 }) {
+const ENHANCER_URL = import.meta.env.VITE_ENHANCER_URL || 'http://localhost:3001';
+
+export default function ArticleCard({ article, index = 0, onEnhanced }) {
+  const [enhancing, setEnhancing] = useState(false);
+  const [enhanceError, setEnhanceError] = useState(null);
+  const [enhanceSuccess, setEnhanceSuccess] = useState(false);
+
+  const handleEnhance = async () => {
+    if (enhancing || article.is_enhanced) return;
+    
+    setEnhancing(true);
+    setEnhanceError(null);
+    
+    try {
+      const response = await axios.post(`${ENHANCER_URL}/enhance/${article.id}`);
+      
+      if (response.data.success) {
+        setEnhanceSuccess(true);
+        // Trigger parent refresh if callback provided
+        if (onEnhanced) {
+          onEnhanced(response.data.data.enhanced);
+        }
+      }
+    } catch (error) {
+      console.error('Enhancement failed:', error);
+      setEnhanceError(error.response?.data?.message || 'Enhancement failed. Please try again.');
+    } finally {
+      setEnhancing(false);
+    }
+  };
   const formattedDate = article.published_at 
     ? new Date(article.published_at).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -80,18 +111,61 @@ export default function ArticleCard({ article, index = 0 }) {
             <ArrowRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
           </Link>
 
-          {article.original_url && (
-            <a 
-              href={article.original_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-midnight-400 hover:text-midnight-600 transition-colors"
-              title="View original"
-            >
-              <ExternalLink className="w-4 h-4" />
-            </a>
-          )}
+          <div className="flex items-center gap-3">
+            {/* Enhance Button - only show for non-enhanced articles */}
+            {!article.is_enhanced && !enhanceSuccess && (
+              <button
+                onClick={handleEnhance}
+                disabled={enhancing}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300
+                  ${enhancing 
+                    ? 'bg-midnight-100 text-midnight-400 cursor-wait' 
+                    : 'bg-gradient-to-r from-amber-400 to-orange-500 text-white hover:shadow-lg hover:shadow-orange-500/25 hover:scale-105'
+                  }`}
+                title="Enhance with AI"
+              >
+                {enhancing ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Enhancing...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="w-3.5 h-3.5" />
+                    Enhance
+                  </>
+                )}
+              </button>
+            )}
+
+            {/* Success indicator */}
+            {enhanceSuccess && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
+                <Sparkles className="w-3.5 h-3.5" />
+                Enhanced!
+              </span>
+            )}
+
+            {article.original_url && (
+              <a 
+                href={article.original_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-midnight-400 hover:text-midnight-600 transition-colors"
+                title="View original"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            )}
+          </div>
         </div>
+
+        {/* Enhancement Error */}
+        {enhanceError && (
+          <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-xs text-red-600">{enhanceError}</p>
+          </div>
+        )}
 
         {/* References indicator */}
         {article.references && article.references.length > 0 && (
