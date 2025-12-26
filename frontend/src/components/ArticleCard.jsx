@@ -10,15 +10,29 @@ export default function ArticleCard({ article, index = 0, onEnhanced }) {
   const [enhancing, setEnhancing] = useState(false);
   const [enhanceError, setEnhanceError] = useState(null);
   const [enhanceSuccess, setEnhanceSuccess] = useState(false);
+  const [enhanceStatus, setEnhanceStatus] = useState('');
 
   const handleEnhance = async () => {
     if (enhancing || article.is_enhanced) return;
     
     setEnhancing(true);
     setEnhanceError(null);
+    setEnhanceStatus('Starting...');
+    
+    // Show "waking up" message after 3 seconds
+    const wakeUpTimer = setTimeout(() => {
+      setEnhanceStatus('Waking up service...');
+    }, 3000);
+    
+    // Show "enhancing" message after 10 seconds
+    const enhancingTimer = setTimeout(() => {
+      setEnhanceStatus('AI is enhancing...');
+    }, 10000);
     
     try {
-      const response = await axios.post(`${ENHANCER_URL}/enhance/${article.id}`);
+      const response = await axios.post(`${ENHANCER_URL}/enhance/${article.id}`, {}, {
+        timeout: 120000 // 2 minute timeout for cold starts + AI processing
+      });
       
       if (response.data.success) {
         setEnhanceSuccess(true);
@@ -29,9 +43,16 @@ export default function ArticleCard({ article, index = 0, onEnhanced }) {
       }
     } catch (error) {
       console.error('Enhancement failed:', error);
-      setEnhanceError(error.response?.data?.message || 'Enhancement failed. Please try again.');
+      if (error.code === 'ECONNABORTED') {
+        setEnhanceError('Request timed out. The service may be starting up. Please try again.');
+      } else {
+        setEnhanceError(error.response?.data?.message || 'Enhancement failed. Please try again.');
+      }
     } finally {
+      clearTimeout(wakeUpTimer);
+      clearTimeout(enhancingTimer);
       setEnhancing(false);
+      setEnhanceStatus('');
     }
   };
   const formattedDate = article.published_at 
@@ -127,7 +148,7 @@ export default function ArticleCard({ article, index = 0, onEnhanced }) {
                 {enhancing ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    Enhancing...
+                    {enhanceStatus || 'Enhancing...'}
                   </>
                 ) : (
                   <>
